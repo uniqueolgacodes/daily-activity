@@ -1,8 +1,9 @@
-name: Auto Commit Daily
+name: Multi Auto Commit
 
 on:
   schedule:
-    - cron: "0 9,18 * * *"  # Runs at 9am and 6pm UTC daily
+    # 4 times daily (UTC)
+    - cron: "0 6,12,18,22 * * *"
   workflow_dispatch:
 
 jobs:
@@ -16,14 +17,32 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Make a change
+      - name: Make multiple changes
         run: |
-          echo "Update: $(date)" >> activity.txt
+          DATE=$(date)
+          RANDOM_NUM=$RANDOM
+
+          # Update activity log
+          echo "Activity update: $DATE" >> activity.txt
+
+          # Update counter
+          if [ ! -f counter.txt ]; then echo 0 > counter.txt; fi
+          COUNT=$(cat counter.txt)
+          COUNT=$((COUNT + 1))
+          echo $COUNT > counter.txt
+
+          # Update JSON file
+          echo "{\"last_update\": \"$DATE\", \"random\": \"$RANDOM_NUM\"}" > log.json
+
+          # Update markdown notes
+          echo "### Update at $DATE" >> notes.md
+          echo "- Random ID: $RANDOM_NUM" >> notes.md
+          echo "" >> notes.md
 
       - name: Commit and Push
         run: |
           git config user.name "uniqueolgacodes"
           git config user.email "flamezthrower49@gmail.com"
           git add .
-          git commit -m "Auto update $(date)" || echo "No changes"
+          git commit -m "Automated multi-file update $(date)" || echo "No changes"
           git push
